@@ -15,11 +15,32 @@ export async function getWaitlistPosition(email) {
 }
 
 export async function getReviews() {
-  const res = await fetch(`${API_BASE}/api/reviews`);
+  const res = await fetch(`${API_BASE}/api/reviews`, {
+    credentials: 'include'
+  });
   return res.json();
 }
 
 export async function healthCheck() {
   const res = await fetch(`${API_BASE}/health`);
   return res.json();
+}
+
+export async function getCurrentUser() {
+  const res = await fetch(`${API_BASE}/api/auth/me`, {
+    credentials: 'include'
+  });
+  return res.json();
+}
+
+export async function logout() {
+  const res = await fetch(`${API_BASE}/api/auth/logout`, {
+    method: 'POST',
+    credentials: 'include'
+  });
+  return res.json();
+}
+
+export function loginWithGithub() {
+  window.location.href = `${API_BASE}/api/auth/github`;
 }

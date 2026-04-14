@@ -1,10 +1,12 @@
 import { useState, useEffect } from 'react'
-import { getReviews, healthCheck } from '../api'
+import { getReviews, healthCheck, getCurrentUser, logout, loginWithGithub } from '../api'
 
 function Dashboard() {
   const [status, setStatus] = useState({ api: 'checking', backend: 'checking' })
   const [reviews, setReviews] = useState([])
   const [loading, setLoading] = useState(true)
+  const [user, setUser] = useState(null)
+  const [authenticated, setAuthenticated] = useState(false)
 
   useEffect(() => {
     async function checkStatus() {
@@ -27,9 +29,32 @@ function Dashboard() {
       setLoading(false)
     }
 
+    async function checkAuth() {
+      try {
+        const data = await getCurrentUser()
+        setUser(data.user)
+        setAuthenticated(data.authenticated)
+      } catch (e) {
+        console.error('Auth check failed:', e)
+      }
+    }
+
+    // Check for login success param
+    const params = new URLSearchParams(window.location.search)
+    if (params.get('login') === 'success') {
+      window.history.replaceState({}, '', '/dashboard')
+    }
+
     checkStatus()
     loadReviews()
+    checkAuth()
   }, [])
+
+  const handleLogout = async () => {
+    await logout()
+    setUser(null)
+    setAuthenticated(false)
+  }
 
   return (
     <div className="dashboard">
@@ -37,11 +62,26 @@ function Dashboard() {
         <div className="logo">Velox</div>
         <nav>
           <a href="/">Home</a>
+          {authenticated && user ? (
+            <div className="user-menu">
+              <span className="username">@{user.github_username}</span>
+              <button onClick={handleLogout} className="logout-btn">Logout</button>
+            </div>
+          ) : (
+            <button onClick={loginWithGithub} className="login-btn">Login with GitHub</button>
+          )}
         </nav>
       </header>
 
       <main className="dashboard-main">
         <h1>Dashboard</h1>
+
+        {!authenticated && (
+          <div className="auth-banner">
+            <p>Login with GitHub to see your reviews and manage your repositories.</p>
+            <button onClick={loginWithGithub} className="login-btn">Login with GitHub</button>
+          </div>
+        )}
 
         <div className="status-cards">
           <div className="status-card">
